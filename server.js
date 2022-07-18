@@ -2,6 +2,7 @@ const app = require('express')();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server)
 const mysql = require('mysql');
+const { emit } = require('process');
 const port = 443
 
 const game_info = mysql.createConnection({
@@ -13,6 +14,11 @@ const game_info = mysql.createConnection({
 //const app = express()
 
 console.log("hh")
+
+//for image loading
+const path = require('path');
+const serveIndex = require('serve-index'); 
+app.use('/images', serveIndex(path.join(__dirname, '/images')));
 
 io.on('connection', socket => {
     console.log("here");
@@ -66,12 +72,32 @@ io.on('connection', socket => {
          io.emit('getTomato', msg)
       })
 
-      // (앱 -> 서버 -> 웹) 게임 끝
+      // (앱 -> 서버 -> 웹) (웹 -> 서버 -> 앱) 게임 끝
       socket.on('endGame', function(msg) {
          console.log("endGame")
          io.emit('endGame', 'endGame')
+         io.emit('timeRequest', 'timeRequest')
       })
- 
+
+      // (웹 -> 서버 -> 앱) 걸린 시간 요청
+   socket.on('timeReport', function (hr, min, sec) {
+         console.log('timeReport')
+         console.log(hr)
+         console.log(min)
+         console.log(sec)
+         var temp = Object();
+         temp.hr = hr;
+         temp.min = min;
+         temp.sec = sec;
+         io.emit('timeBroadcast', temp)
+      })
+
+      // (웹 -> 서버 -> 앱) restart
+      socket.on('restart', function(msg) {
+         console.log("restart")
+         io.emit('restart', 'restart')
+      })
+   
       // 연결 종료 시
       socket.on('disconnect', () => {
          console.log('클라이언트 접속 해제', ip, socket.id);
