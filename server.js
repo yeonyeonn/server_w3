@@ -1,4 +1,7 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
+
+// const app = require('express')();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server)
 const mysql = require('mysql');
@@ -8,6 +11,7 @@ const port = 443
 const game_info = mysql.createConnection({
    host : 'localhost',
    user : 'root',
+   //password:
    database : "game_info" 
  });
 
@@ -16,9 +20,11 @@ const game_info = mysql.createConnection({
 console.log("hh")
 
 //for image loading
-const path = require('path');
-const serveIndex = require('serve-index'); 
-app.use('/images', serveIndex(path.join(__dirname, '/images')));
+// const path = require('path');
+// const serveIndex = require('serve-index'); 
+// app.use('/images', serveIndex(path.join(__dirname, '/images')));
+
+// app.use('/images', express.static('images'));
 
 io.on('connection', socket => {
     console.log("here");
@@ -72,10 +78,27 @@ io.on('connection', socket => {
          io.emit('getTomato', msg)
       })
 
-      // (앱 -> 서버 -> 웹) (웹 -> 서버 -> 앱) 게임 끝
+      // (앱 -> 서버 -> 웹)
+      socket.on('countTomato', function(msg) {
+         console.log("countTomato")
+         var temp = Object();
+         temp.good = msg.good
+         temp.bad = msg.bad
+         console.log(temp.good)
+         console.log(temp.bad)
+         io.emit('countTomato', temp)
+      })
+
+      // (웹 -> 서버 -> 앱) 게임 끝
+      socket.on('endGameWeb', function(msg) {
+         console.log("endGameWeb")
+         io.emit('endGame', 'endGame')
+         io.emit('timeRequest', 'timeRequest')
+      })
+// (앱 -> 서버 -> 웹) 게임 끝
       socket.on('endGame', function(msg) {
          console.log("endGame")
-         io.emit('endGame', 'endGame')
+         io.emit('endGameApp', 'endGameApp')
          io.emit('timeRequest', 'timeRequest')
       })
 
